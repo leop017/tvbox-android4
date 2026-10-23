@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -203,8 +204,7 @@ public class MainActivity extends BaseActivity {
             TextView tv = findViewById(id);
             boolean selected = tv.getTag() == tab;
             tv.setSelected(selected);
-            tv.setTextColor(selected ? getResources().getColor(R.color.accent)
-                    : getResources().getColor(R.color.text_primary));
+            tv.setTextColor(ContextCompat.getColor(this, selected ? R.color.accent : R.color.text_primary));
         }
     }
 

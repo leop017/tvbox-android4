@@ -105,4 +105,15 @@ public final class AppConstants {
     public static final int GRID_COLUMNS_NORMAL = 6;
     public static final int GRID_COLUMNS_LARGE = 5;
     public static final int GRID_COLUMNS_XLARGE = 4;
+
+    // ===== 内存敏感设备(Sharp 50V3A / API 17 / ≤1GB)容量上限 =====
+    /**
+     * 在 512MB 内存设备(Sharp 50V3A 等 API 17 入门电视)上,
+     * 缓存容量减半,避免 Glide + ExoPlayer 同时占满内存导致 OOM。
+     */
+    public static final boolean REDUCED_MEMORY =
+            Runtime.getRuntime().maxMemory() < 512L * 1024 * 1024;
+
+    public static final int REDUCED_LIST_CACHE_MAX_ENTRIES = 40;
+    public static final int REDUCED_DETAIL_CACHE_MAX_ENTRIES = 30;
 }

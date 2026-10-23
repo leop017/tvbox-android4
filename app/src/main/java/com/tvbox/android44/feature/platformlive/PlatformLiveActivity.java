@@ -427,7 +427,11 @@ public class PlatformLiveActivity extends AppCompatActivity implements Player.Li
         player.prepare();
         player.setPlayWhenReady(true);
         playerBuffering.setVisibility(View.VISIBLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        try {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } catch (Exception ignored) {
+            // 部分 TV ROM 对 window flags 有自定义限制,忽略不崩溃
+        }
         showPlayerHint(currentRoom.title + " · " + (c.quality == null || c.quality.isEmpty()
                 ? c.name : c.quality), true);
     }
@@ -515,7 +519,11 @@ public class PlatformLiveActivity extends AppCompatActivity implements Player.Li
             player = null;
         }
         playerView.setPlayer(null);
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        try {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } catch (Exception ignored) {
+            // 部分 TV ROM 对 window flags 有自定义限制,忽略不崩溃
+        }
     }
 
     // ===== 返回逐级退栈 =====

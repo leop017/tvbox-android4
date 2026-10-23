@@ -152,16 +152,15 @@ public class SearchFragment extends Fragment implements PageFocusState.Owner {
             return;
         }
         if (query.length() > AppConstants.SEARCH_QUERY_MAX_LENGTH) {
-            query2 = query.substring(0, AppConstants.SEARCH_QUERY_MAX_LENGTH);
-        } else {
-            query2 = query;
+            query = query.substring(0, AppConstants.SEARCH_QUERY_MAX_LENGTH);
         }
         // 新搜索：取消旧搜索；离开页面导致的取消不计失败
         if (searchHandle != null) {
             searchHandle.cancel();
         }
         final int rid = ++requestId;
-        lastQuery = query2;
+        lastQuery = query;
+        final String query2 = query;
         adapter.clear();
         state.showLoading("正在搜索…");
         status.setVisibility(View.GONE);
@@ -200,8 +199,6 @@ public class SearchFragment extends Fragment implements PageFocusState.Owner {
             }
         });
     }
-
-    private String query2;
 
     /** 增量渲染：按 key 全量比对，避免追加重复（merger 已去重，这里防御）。 */
     private void renderResults(List<Movie> merged, boolean appendOnly) {

@@ -235,7 +235,11 @@ public class LiveTvActivity extends AppCompatActivity implements Player.Listener
         player.prepare();
         player.setPlayWhenReady(true);
         buffering.setVisibility(View.VISIBLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        try {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } catch (Exception ignored) {
+            // 部分 TV ROM 对 window flags 有自定义限制,忽略不崩溃
+        }
         showHint(channel.number + " " + channel.name + " · 线路"
                 + (lineIndex + 1) + "/" + channel.lines.size()
                 + (channel.lines.size() > 1 ? "（上/下键换线）" : ""));
@@ -536,7 +540,11 @@ public class LiveTvActivity extends AppCompatActivity implements Player.Listener
             player.release();
             player = null;
         }
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        try {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } catch (Exception ignored) {
+            // 部分 TV ROM 对 window flags 有自定义限制,忽略不崩溃
+        }
         handler.removeMessages(MSG_POSITION_POLL);
     }
 

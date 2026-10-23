@@ -257,7 +257,14 @@ public class PlayerActivity extends AppCompatActivity implements Player.Listener
             @Override
             public void onLongPressSpeed() {
                 if (player != null) {
-                    player.setPlaybackParameters(new PlaybackParameters(2.0f));
+                    try {
+                        player.setPlaybackParameters(new PlaybackParameters(2.0f));
+                    } catch (Exception e) {
+                        // 部分 API 17 硬件解码器不支持倍速,忽略不崩溃
+                        if (com.tvbox.android44.BuildConfig.DEBUG) {
+                            android.util.Log.w("TVBOX_PLAYER", "2x speed failed", e);
+                        }
+                    }
                     showHint(getString(R.string.player_double_speed));
                 }
             }
@@ -312,7 +319,11 @@ public class PlayerActivity extends AppCompatActivity implements Player.Listener
                     int max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
                     int cur = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
                     int next = Math.max(0, Math.min(max, cur + delta / 20));
-                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, next, 0);
+                    try {
+                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, next, 0);
+                    } catch (Exception ignored) {
+                        // 部分 TV ROM 不支持应用直接调音量,忽略不崩溃
+                    }
                     showHint(getString(R.string.player_volume, next, max));
                 }
             }
@@ -460,7 +471,11 @@ public class PlayerActivity extends AppCompatActivity implements Player.Listener
         applySpeed(speedIndex);
         requestAudioFocus();
         registerNoisy();
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        try {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } catch (Exception ignored) {
+            // 部分 TV ROM 对 window flags 有自定义限制,忽略不崩溃
+        }
         buffering.setVisibility(View.VISIBLE);
         int displayEpisode = usingLastUrl && resumeHistory != null ? resumeHistory.episodeIndex : episodeIndex;
         controller.setTitles(movie.name,
@@ -539,7 +554,10 @@ public class PlayerActivity extends AppCompatActivity implements Player.Listener
         playing = isPlaying;
         controller.setPlaying(isPlaying);
         if (isPlaying) {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            try {
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -735,7 +753,14 @@ public class PlayerActivity extends AppCompatActivity implements Player.Listener
     private void applySpeed(int index) {
         float speed = AppConstants.SPEED_SEQUENCE[index];
         if (player != null) {
-            player.setPlaybackParameters(new PlaybackParameters(speed));
+            try {
+                player.setPlaybackParameters(new PlaybackParameters(speed));
+            } catch (Exception e) {
+                // 部分 API 17 硬件解码器不支持倍速,忽略不崩溃
+                if (com.tvbox.android44.BuildConfig.DEBUG) {
+                    android.util.Log.w("TVBOX_PLAYER", "setPlaybackParameters failed", e);
+                }
+            }
         }
         controller.setSpeedLabel(speed);
         showHint(getString(R.string.player_speed, String.valueOf(speed)));
@@ -1088,7 +1113,10 @@ public class PlayerActivity extends AppCompatActivity implements Player.Listener
         playerView.setPlayer(null);
         abandonAudioFocus();
         unregisterNoisy();
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        try {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } catch (Exception ignored) {
+        }
         handler.removeMessages(MSG_SAVE_HISTORY);
         handler.removeMessages(MSG_UPDATE_TIME);
     }

@@ -83,10 +83,26 @@ public class MovieRepository {
     private final ExecutorService categoryExecutor;
     private final MacCmsClient client = new MacCmsClient();
 
+    /**
+     * 内存敏感设备(Sharp 50V3A 等 API 17 入门电视,≤512MB)缓存容量减半,
+     * 避免 Glide + ExoPlayer 同时占满内存导致 OOM。
+     */
+    private static int listCacheCapacity() {
+        return AppConstants.REDUCED_MEMORY
+                ? AppConstants.REDUCED_LIST_CACHE_MAX_ENTRIES
+                : AppConstants.LIST_CACHE_MAX_ENTRIES;
+    }
+
+    private static int detailCacheCapacity() {
+        return AppConstants.REDUCED_MEMORY
+                ? AppConstants.REDUCED_DETAIL_CACHE_MAX_ENTRIES
+                : AppConstants.DETAIL_CACHE_MAX_ENTRIES;
+    }
+
     private final LruCache<String, CacheEntry<PagedMovies>> listCache =
-            new LruCache<String, CacheEntry<PagedMovies>>(AppConstants.LIST_CACHE_MAX_ENTRIES);
+            new LruCache<String, CacheEntry<PagedMovies>>(listCacheCapacity());
     private final LruCache<String, CacheEntry<Movie>> detailCache =
-            new LruCache<String, CacheEntry<Movie>>(AppConstants.DETAIL_CACHE_MAX_ENTRIES);
+            new LruCache<String, CacheEntry<Movie>>(detailCacheCapacity());
     private final LruCache<String, CacheEntry<List<Category>>> categoryCache =
             new LruCache<String, CacheEntry<List<Category>>>(8);
     private final ConcurrentHashMap<String, InFlight> inFlight =
