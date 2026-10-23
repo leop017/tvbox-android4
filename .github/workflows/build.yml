@@ -17,6 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # 通用构建:验证所有变体可编译 + 打包
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -40,23 +41,24 @@ jobs:
           echo 'sdk.dir=' >> local.properties
           chmod +x ./gradlew
 
-      - name: Gradle compile (debug)
-        run: ./gradlew :app:compileDebugJavaWithJavac --stacktrace
+      - name: Gradle compile all variants
+        run: ./gradlew :app:compileTvDebugJavaWithJavac :app:compileReleaseJavaWithJavac --stacktrace
 
       - name: Gradle unit tests
-        run: ./gradlew :app:testDebugUnitTest --continue
+        run: ./gradlew :app:testTvDebugUnitTest --continue
 
-      - name: Build release APK (unsigned fallback)
-        run: ./gradlew :app:assembleRelease :app:assembleDebug --stacktrace
+      - name: Build release + tv variants
+        run: ./gradlew :app:assembleTvRelease :app:assembleRelease --stacktrace
 
       - name: Verify APK artifacts
         run: |
           ls -lh app/build/outputs/apk/
+          test -f app/build/outputs/apk/tv/release/app-tv-release-unsigned.apk \
+            -o -f app/build/outputs/apk/tv/release/app-tv-release.apk
           test -f app/build/outputs/apk/release/app-release-unsigned.apk \
             -o -f app/build/outputs/apk/release/app-release.apk
-          test -f app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Upload APKs (debug + release)
+      - name: Upload APKs (tv + regular release)
         uses: actions/upload-artifact@v4
         with:
           name: tvbox-android44-apk-${{ github.run_id }}
@@ -70,6 +72,67 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tvbox-android44-buildlogs-${{ github.run_id }}
+          path: |
+            app/build/reports/**
+          if-no-files-found: ignore
+
+  # Sharp 50V3A 专属 TV 构建(armv7a 单 ABI + TV_BUILD=true 强制 REDUCED_MEMORY)
+  tv-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Validate Gradle wrapper
+        run: |
+          echo 'sdk.dir=' >> local.properties
+          chmod +x ./gradlew
+
+      - name: Build tvDebug APK (for Sharp 50V3A side-load)
+        run: ./gradlew :app:assembleTvDebug :app:assembleTvRelease --stacktrace
+
+      - name: Verify TV APKs
+        run: |
+          ls -lh app/build/outputs/apk/tv/
+          test -f app/build/outputs/apk/tv/debug/app-tv-debug.apk
+          # release 在 unsigned 时是 app-tv-release-unsigned.apk, 签名后是 app-tv-release.apk
+          test -f app/build/outputs/apk/tv/release/app-tv-release-unsigned.apk \
+            -o -f app/build/outputs/apk/tv/release/app-tv-release.apk
+
+      - name: Sign TV release APK (when keystore provided)
+        if: ${{ vars.TVBOX_STORE_FILE != '' }}
+        run: |
+          echo "TVBOX_STORE_FILE=${{ secrets.TVBOX_STORE_FILE }}" >> local.properties
+          echo "TVBOX_STORE_PASSWORD=${{ secrets.TVBOX_STORE_PASSWORD }}" >> local.properties
+          echo "TVBOX_KEY_ALIAS=${{ secrets.TVBOX_KEY_ALIAS }}" >> local.properties
+          echo "TVBOX_KEY_PASSWORD=${{ secrets.TVBOX_KEY_PASSWORD }}" >> local.properties
+          ./gradlew :app:assembleTvRelease --stacktrace
+
+      - name: Upload TV APK (debug + release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvbox-android44-tv-${{ github.run_id }}
+          path: |
+            app/build/outputs/apk/tv/**/*.apk
+          if-no-files-found: warn
+
+      - name: Upload TV build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvbox-android44-tv-buildlogs-${{ github.run_id }}
           path: |
             app/build/reports/**
           if-no-files-found: ignore

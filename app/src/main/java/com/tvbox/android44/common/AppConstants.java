@@ -110,9 +110,12 @@ public final class AppConstants {
     /**
      * 在 512MB 内存设备(Sharp 50V3A 等 API 17 入门电视)上,
      * 缓存容量减半,避免 Glide + ExoPlayer 同时占满内存导致 OOM。
+     * TV productFlavor (BuildConfig.TV_BUILD=true) 强制为 true,
+     * 其他构建通过运行时检测兜底。
      */
     public static final boolean REDUCED_MEMORY =
-            Runtime.getRuntime().maxMemory() < 512L * 1024 * 1024;
+            com.tvbox.android44.BuildConfig.TV_BUILD
+                    || Runtime.getRuntime().maxMemory() < 512L * 1024 * 1024;
 
     public static final int REDUCED_LIST_CACHE_MAX_ENTRIES = 40;
     public static final int REDUCED_DETAIL_CACHE_MAX_ENTRIES = 30;

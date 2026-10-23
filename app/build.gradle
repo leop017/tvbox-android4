@@ -33,6 +33,26 @@ android {
         buildConfigField "String", "IPTV_SOURCE_URL", groovy.json.JsonOutput.toJson(injectedProp('TVBOX_IPTV_SOURCE_URL', 'http://20.205.10.127:8787/tvbox/result.txt'))
     }
 
+    // Sharp 50V3A / Android 4.2 (API 17) 入门级 TV 设备专属变体:
+    // 1) 仅生成 armv7a 单 ABI(≤1GB 内存)
+    // 2) versionName 追加 "-tv", 便于设备侧识别
+    // 3) TV_BUILD=true 让 AppConstants.REDUCED_MEMORY 强制开启
+    // 普通构建也声明 TV_BUILD=false, 保证 Java 端引用不会编译失败
+    buildConfigField 'boolean', 'TV_BUILD', 'false'
+    flavorDimensions += 'device'
+    productFlavors {
+        tv {
+            dimension 'device'
+            applicationIdSuffix '-tv'
+            versionNameSuffix '-tv'
+            buildConfigField 'boolean', 'TV_BUILD', 'true'
+            // Sharp 50V3A 仅 ARMv7 硬件,单 ABI 显著降低包体与内存峰值
+            ndk {
+                abiFilters 'armeabi-v7a'
+            }
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
